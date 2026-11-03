@@ -599,16 +599,42 @@ stackTitles.forEach((title,i)=>{
 });
 table.add(bookStack);
 
+// A little strawberry cake: pink sides, a smiling face and a soft icing edge.
 const cake = new THREE.Group();cake.userData.type='strawberry-cake';cake.position.set(.62,.84,.25);
-function cakeLayer(radius,height,y,color){const layer=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,40),new THREE.MeshLambertMaterial({color}));layer.position.y=y;cake.add(layer);return layer;}
-cakeLayer(.29,.018,.01,0xe6eefb);cakeLayer(.25,.025,.03,0xffffff);
-cakeLayer(.225,.19,.13,0xffd9de);cakeLayer(.229,.023,.115,0xdc6c82);cakeLayer(.235,.055,.23,0xfff7ee);
-for(let i=0;i<16;i++){const a=i*Math.PI*2/16;const drip=new THREE.Mesh(new THREE.SphereGeometry(.024,8,6),new THREE.MeshLambertMaterial({color:0xfff7ee}));drip.scale.set(1,.7+(i%3)*.45,.8);drip.position.set(Math.cos(a)*.218,.205,Math.sin(a)*.218);cake.add(drip);}
-for(let i=0;i<5;i++){
-  const a=i*Math.PI*2/5,berry=new THREE.Group();berry.userData.type='strawberry';berry.position.set(Math.cos(a)*.135,.29,Math.sin(a)*.135);berry.rotation.z=Math.sin(a)*.15;
-  const fruit=new THREE.Mesh(new THREE.SphereGeometry(.044,12,10),new THREE.MeshLambertMaterial({color:i%2?0xda3b52:0xeb4960}));fruit.scale.set(.85,1.28,.85);berry.add(fruit);
-  for(let j=0;j<7;j++){const t=j*Math.PI*2/7;const seed=new THREE.Mesh(new THREE.SphereGeometry(.003,4,3),new THREE.MeshBasicMaterial({color:0xffe7a8}));seed.position.set(Math.cos(t)*.036,(j%3-1)*.016,Math.sin(t)*.036);berry.add(seed);}
-  for(let j=0;j<4;j++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(.017,6,4),new THREE.MeshLambertMaterial({color:0x638564}));leaf.scale.set(1,.18,.45);leaf.rotation.y=j*Math.PI/2;leaf.position.set(Math.cos(j*Math.PI/2)*.011,.048,Math.sin(j*Math.PI/2)*.011);berry.add(leaf);}
+function cakeLayer(radius,height,y,color){const layer=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,48),new THREE.MeshLambertMaterial({color}));layer.position.y=y;cake.add(layer);return layer;}
+cakeLayer(.29,.018,.01,0xe6eefb);cakeLayer(.265,.022,.03,0xffffff);
+const cakeSideTex=tex(1024,512,(g,w,h)=>{
+  const pink=g.createLinearGradient(0,0,0,h);pink.addColorStop(0,'#f4c5bb');pink.addColorStop(1,'#e7aa9f');g.fillStyle=pink;g.fillRect(0,0,w,h);
+  // The continuous scalloped icing wraps around the whole cake.
+  g.beginPath();g.moveTo(0,0);g.lineTo(w,0);g.lineTo(w,h*.22);
+  for(let x=w;x>=0;x-=2){const t=x/w*Math.PI*2;const edge=.23+.055*Math.sin(t*7)+.035*Math.cos(t*11)+.10*Math.exp(-Math.pow((x/w-.5)/.065,2));g.lineTo(x,h*edge);}
+  g.lineTo(0,0);g.closePath();g.fillStyle='#fffaf1';g.fill();
+  // Face sits on the front, below the longest frosting drip.
+  g.fillStyle='#382b2b';for(const x of [.455,.545]){g.beginPath();g.arc(w*x,h*.59,8,0,Math.PI*2);g.fill();}
+  g.strokeStyle='#382b2b';g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(w*.455,h*.70);g.bezierCurveTo(w*.47,h*.83,w*.53,h*.83,w*.545,h*.70);g.stroke();
+  for(const x of [.435,.565]){g.fillStyle='#d8888490';g.beginPath();g.ellipse(w*x,h*.69,15,9,0,0,Math.PI*2);g.fill();}
+});
+const cakeBody=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.235,64),new THREE.MeshLambertMaterial({map:cakeSideTex}));cakeBody.position.y=.16;cakeBody.rotation.y=Math.PI;cake.add(cakeBody);
+cakeLayer(.235,.035,.282,0xfffaf1);
+// Six small strawberries arranged evenly around the cake: rounded shoulders, tapered tips, seeds and green crowns.
+const berryPositions=Array.from({length:6},(_,i)=>{const angle=i*Math.PI/3;return [Math.sin(angle)*.155,Math.cos(angle)*.155];});
+const strawberryProfile=[];
+function strawberryRadius(t){return .074*Math.sin(t)*(.72+.36*t/Math.PI);}
+for(let k=0;k<=24;k++){const t=k*Math.PI/24;strawberryProfile.push(new THREE.Vector2(strawberryRadius(t),.088*(1-Math.cos(t))));}
+const strawberryGeometry=new THREE.LatheGeometry(strawberryProfile,28);
+const strawberrySeedMaterial=new THREE.MeshLambertMaterial({color:0xffd486});
+const strawberryLeafMaterial=new THREE.MeshLambertMaterial({color:0x3d843c});
+for(let i=0;i<6;i++){
+  const berry=new THREE.Group();berry.userData.type='strawberry';berry.position.set(berryPositions[i][0],.294,berryPositions[i][1]);berry.scale.set(.65,.65,.65);berry.rotation.y=i*Math.PI/3;
+  const fruit=new THREE.Mesh(strawberryGeometry,new THREE.MeshLambertMaterial({color:i%2?0xd91d30:0xef3040}));berry.add(fruit);
+  for(let row=0;row<6;row++){
+    const t=.48+row*.41,y=.088*(1-Math.cos(t)),r=strawberryRadius(t)+.0015,count=8+Math.round(10*Math.sin(t));
+    for(let j=0;j<count;j++){const a=(j+row*.5)*Math.PI*2/count;const seed=new THREE.Mesh(new THREE.SphereGeometry(.003,5,4),strawberrySeedMaterial);seed.scale.set(.75,1.55,.6);seed.rotation.y=a;seed.position.set(Math.sin(a)*r,y,Math.cos(a)*r);berry.add(seed);}
+  }
+  for(let j=0;j<5;j++){
+    const a=j*Math.PI*2/5;const leaf=new THREE.Mesh(new THREE.SphereGeometry(.026,10,6),strawberryLeafMaterial);leaf.scale.set(.48,.12,1);leaf.rotation.y=a;leaf.position.set(Math.sin(a)*.018,.171,Math.cos(a)*.018);berry.add(leaf);
+  }
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.003,.004,.025,6),strawberryLeafMaterial);stem.position.set(0,.184,0);stem.rotation.z=.18;berry.add(stem);
   cake.add(berry);
 }
 table.add(cake);
